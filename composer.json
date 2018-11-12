@@ -1,6 +1,7 @@
 {
     "name": "devimteam/rabbitmq-service-provider",
     "description": "Silex rabbitmq service provider",
+    "license": "BSD-4-Clause",
     "type": "library",
     "minimum-stability": "dev",
     "prefer-stable": true,
