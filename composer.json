@@ -1,0 +1,6 @@
+{
+    "name": "devimteam/rabbitmq-service-provider",
+    "description": "Silex rabbitmq service provider",
+    "type": "library",
+    "require": {}
+}
