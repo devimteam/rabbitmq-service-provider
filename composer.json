@@ -2,5 +2,20 @@
     "name": "devimteam/rabbitmq-service-provider",
     "description": "Silex rabbitmq service provider",
     "type": "library",
-    "require": {}
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=7.1",
+        "pimple/pimple": "^3.0",
+        "php-amqplib/rabbitmq-bundle": "~1.14",
+        "ext-amqp": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Devim\\": "src/"
+        }
+    }
 }
