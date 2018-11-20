@@ -2,8 +2,6 @@
     "name": "devimteam/rabbitmq-service-provider",
     "description": "Silex rabbitmq service provider",
     "type": "library",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "require": {
         "php": ">=7.1",
         "pimple/pimple": "^3.0",
