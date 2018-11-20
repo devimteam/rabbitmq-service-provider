@@ -1,5 +1,5 @@
 <?php
-namespace devim\Provider;
+namespace Devim\Provider\RabbitmqServiceProvider;
 
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
