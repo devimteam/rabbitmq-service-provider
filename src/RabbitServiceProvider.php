@@ -21,7 +21,7 @@ class RabbitServiceProvider implements ServiceProviderInterface
 
     private function loadConnections(Container $app): void
     {
-        $container['rabbit.connection'] = function ($container) {
+        $app['rabbit.connection'] = function ($container) {
             if (!isset($container['rabbit.connections'])) {
                 throw new \InvalidArgumentException('You need to specify at least a connection in your configuration.');
             }
@@ -54,7 +54,7 @@ class RabbitServiceProvider implements ServiceProviderInterface
             $producers = [];
             foreach ($app['rabbit.producers'] as $name => $options) {
                 $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
-                if (!isset($app['rabbit.connection'][$nameConnection])) {
+                if (!isset($app['rabbit.connections'][$nameConnection])) {
                     throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
                 }
 
