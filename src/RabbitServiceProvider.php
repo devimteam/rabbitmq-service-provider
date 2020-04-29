@@ -3,7 +3,6 @@ namespace Devim\Provider\RabbitmqServiceProvider;
 
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
-use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use OldSound\RabbitMqBundle\RabbitMq\Consumer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Connection\AMQPLazyConnection;
@@ -48,31 +47,7 @@ class RabbitServiceProvider implements ServiceProviderInterface
     private function loadProducers(Container $app): void
     {
         $app['rabbit.producer'] = function ($app) {
-            if (!isset($app['rabbit.producers'])) {
-                return null;
-            }
-            $producers = [];
-            foreach ($app['rabbit.producers'] as $name => $options) {
-                $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
-                if (!isset($app['rabbit.connections'][$nameConnection])) {
-                    throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
-                }
-
-                $connection = $app['rabbit.connection'][$nameConnection];
-                $producer = new Producer($connection);
-                $producer->setExchangeOptions($options['exchange_options']);
-                //this producer doesn't define a queue
-                if (!isset($options['queue_options'])) {
-                    $options['queue_options']['name'] = null;
-                }
-                $producer->setQueueOptions($options['queue_options']);
-                if ((array_key_exists('auto_setup_fabric', $options)) && (!$options['auto_setup_fabric'])) {
-                    $producer->disableAutoSetupFabric();
-                }
-                $producers[$name] = $producer;
-            }
-
-            return $producers;
+            return new ProducerManager($app);
         };
     }
 
