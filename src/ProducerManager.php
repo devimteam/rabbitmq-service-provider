@@ -14,8 +14,6 @@ use function array_key_exists;
  */
 class ProducerManager
 {
-    private const DEFAULT_CONNECTION = 'default';
-
     /**
      * @var Container
      */
@@ -62,7 +60,7 @@ class ProducerManager
         }
         $options = $this->container['rabbit.producers.config'][$name];
 
-        $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
+        $nameConnection = $options['connection'] ?? RabbitServiceProvider::DEFAULT_CONNECTION;
         if (!isset($this->container['rabbit.connections'][$nameConnection])) {
             throw new InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
         }

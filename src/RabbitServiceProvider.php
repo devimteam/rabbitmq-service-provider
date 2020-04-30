@@ -9,7 +9,7 @@ use PhpAmqpLib\Connection\AMQPLazyConnection;
 
 class RabbitServiceProvider implements ServiceProviderInterface
 {
-    private const DEFAULT_CONNECTION = 'default';
+    public const DEFAULT_CONNECTION = 'default';
 
     public function register(Container $pimple)
     {
@@ -54,12 +54,12 @@ class RabbitServiceProvider implements ServiceProviderInterface
     private function loadConsumers(Container $app)
     {
         $app['rabbit.consumer'] = function ($app) {
-            if (!isset($app['rabbit.consumers'])) {
+            if (!isset($app['rabbit.consumers.config'])) {
                 return null;
             }
             $consumers = [];
 
-            foreach ($app['rabbit.consumers'] as $name => $options) {
+            foreach ($app['rabbit.consumers.config'] as $name => $options) {
                 $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
                 if (!isset($app['rabbit.connection'][$nameConnection])) {
                     throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
