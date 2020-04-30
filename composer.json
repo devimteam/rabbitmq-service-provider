@@ -3,12 +3,14 @@
     "description": "Silex rabbitmq service provider",
     "license": "BSD-4-Clause",
     "type": "library",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
+    "version": "1.0.1",
     "require": {
         "php": ">=7.1",
         "pimple/pimple": "^3.0",
         "php-amqplib/rabbitmq-bundle": "~1.14",
+        "knplabs/console-service-provider": "~1.0",
+        "vlobchuk/isolate-console-provider": "dev-master",
+        "silex/silex": "~2.0.3-DEV",
         "ext-amqp": "*"
     },
     "require-dev": {
@@ -16,7 +18,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Devim\\": "src/"
+          "Devim\\Provider\\RabbitmqServiceProvider\\": "src/"
         }
     }
 }
