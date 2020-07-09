@@ -1,8 +1,12 @@
 {
+    "type": "library",
     "name": "devimteam/rabbitmq-service-provider",
     "description": "Silex rabbitmq service provider",
-    "type": "library",
-    "version": "1.0.1",
+    "keywords": [],
+    "license": "",
+    "authors": [],
+    "version": "1.0.2",
+    "minimum-stability": "dev",
     "require": {
         "php": ">=7.1",
         "pimple/pimple": "^3.0",
