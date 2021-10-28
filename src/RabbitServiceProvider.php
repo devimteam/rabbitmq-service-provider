@@ -1,12 +1,15 @@
 <?php
+
 namespace Devim\Provider\RabbitmqServiceProvider;
 
-use Pimple\Container;
-use Pimple\ServiceProviderInterface;
-use OldSound\RabbitMqBundle\RabbitMq\Producer;
+use OldSound\RabbitMqBundle\RabbitMq\BaseAmqp;
+use OldSound\RabbitMqBundle\RabbitMq\BatchConsumer;
 use OldSound\RabbitMqBundle\RabbitMq\Consumer;
+use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Connection\AMQPLazyConnection;
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
 
 class RabbitServiceProvider implements ServiceProviderInterface
 {
@@ -28,7 +31,7 @@ class RabbitServiceProvider implements ServiceProviderInterface
             $connections = [];
             foreach ($container['rabbit.connections'] as $name => $options) {
                 $isLazyConnection = $container['rabbit.connections'][$name]['lazy'] ?? false;
-                $connectionClass = $isLazyConnection ? AMQPLazyConnection::class : AMQPConnection::class;
+                $connectionClass  = $isLazyConnection ? AMQPLazyConnection::class : AMQPConnection::class;
 
                 $connection = new $connectionClass(
                     $container['rabbit.connections'][$name]['host'],
@@ -59,7 +62,7 @@ class RabbitServiceProvider implements ServiceProviderInterface
                 }
 
                 $connection = $app['rabbit.connection'][$nameConnection];
-                $producer = new Producer($connection);
+                $producer   = new Producer($connection);
                 $producer->setExchangeOptions($options['exchange_options']);
                 //this producer doesn't define a queue
                 if (!isset($options['queue_options'])) {
@@ -79,39 +82,57 @@ class RabbitServiceProvider implements ServiceProviderInterface
     private function loadConsumers(Container $app)
     {
         $app['rabbit.consumer'] = function ($app) {
-            if (!isset($app['rabbit.consumers'])) {
+            if (!isset($app['rabbit.consumers']) && !isset($app['rabbit.batch_consumers'])) {
                 return null;
             }
             $consumers = [];
 
-            foreach ($app['rabbit.consumers'] as $name => $options) {
+            foreach ($app['rabbit.consumers'] ?? [] as $name => $options) {
                 $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
                 if (!isset($app['rabbit.connection'][$nameConnection])) {
                     throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
                 }
 
                 $connection = $app['rabbit.connection'][$nameConnection];
-                $consumer = new Consumer($connection);
-                $consumer->setExchangeOptions($options['exchange_options']);
-                $consumer->setQueueOptions($options['queue_options']);
-                $consumer->setCallback(array($app[$options['callback']], 'execute'));
-                if (array_key_exists('qos_options', $options)) {
-                    $consumer->setQosOptions(
-                        $options['qos_options']['prefetch_size'],
-                        $options['qos_options']['prefetch_count'],
-                        $options['qos_options']['global']
-                    );
-                }
-                if (array_key_exists('idle_timeout', $options)) {
-                    $consumer->setIdleTimeout($options['idle_timeout']);
-                }
-                if ((array_key_exists('auto_setup_fabric', $options)) && (!$options['auto_setup_fabric'])) {
-                    $consumer->disableAutoSetupFabric();
-                }
+                $consumer   = new Consumer($connection);
+                $this->setupConsumer($consumer, $app, $options);
                 $consumers[$name] = $consumer;
             }
 
+            foreach ($app['rabbit.batch_consumers'] ?? [] as $name => $options) {
+                $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
+                if (!isset($app['rabbit.connection'][$nameConnection])) {
+                    throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
+                }
+
+                $connection = $app['rabbit.connection'][$nameConnection];
+                $consumer   = new BatchConsumer($connection);
+                $this->setupConsumer($consumer, $app, $options);
+                $consumers[$name] = $consumer;
+            }
+
+
             return $consumers;
         };
+    }
+
+    private function setupConsumer(BaseAmqp $consumer, Container $app, array $options): void
+    {
+        $consumer->setExchangeOptions($options['exchange_options']);
+        $consumer->setQueueOptions($options['queue_options']);
+        $consumer->setCallback(array($app[$options['callback']], 'execute'));
+        if (array_key_exists('qos_options', $options)) {
+            $consumer->setQosOptions(
+                $options['qos_options']['prefetch_size'],
+                $options['qos_options']['prefetch_count'],
+                $options['qos_options']['global']
+            );
+        }
+        if (array_key_exists('idle_timeout', $options)) {
+            $consumer->setIdleTimeout($options['idle_timeout']);
+        }
+        if ((array_key_exists('auto_setup_fabric', $options)) && (!$options['auto_setup_fabric'])) {
+            $consumer->disableAutoSetupFabric();
+        }
     }
 }
