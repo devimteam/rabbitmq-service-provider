@@ -5,7 +5,6 @@ namespace Devim\Provider\RabbitmqServiceProvider;
 use OldSound\RabbitMqBundle\RabbitMq\BaseAmqp;
 use OldSound\RabbitMqBundle\RabbitMq\BatchConsumer;
 use OldSound\RabbitMqBundle\RabbitMq\Consumer;
-use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Connection\AMQPLazyConnection;
 use Pimple\Container;
@@ -13,7 +12,7 @@ use Pimple\ServiceProviderInterface;
 
 class RabbitServiceProvider implements ServiceProviderInterface
 {
-    private const DEFAULT_CONNECTION = 'default';
+    public const DEFAULT_CONNECTION = 'default';
 
     public function register(Container $pimple)
     {
@@ -51,43 +50,19 @@ class RabbitServiceProvider implements ServiceProviderInterface
     private function loadProducers(Container $app): void
     {
         $app['rabbit.producer'] = function ($app) {
-            if (!isset($app['rabbit.producers'])) {
-                return null;
-            }
-            $producers = [];
-            foreach ($app['rabbit.producers'] as $name => $options) {
-                $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
-                if (!isset($app['rabbit.connections'][$nameConnection])) {
-                    throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
-                }
-
-                $connection = $app['rabbit.connection'][$nameConnection];
-                $producer   = new Producer($connection);
-                $producer->setExchangeOptions($options['exchange_options']);
-                //this producer doesn't define a queue
-                if (!isset($options['queue_options'])) {
-                    $options['queue_options']['name'] = null;
-                }
-                $producer->setQueueOptions($options['queue_options']);
-                if ((array_key_exists('auto_setup_fabric', $options)) && (!$options['auto_setup_fabric'])) {
-                    $producer->disableAutoSetupFabric();
-                }
-                $producers[$name] = $producer;
-            }
-
-            return $producers;
+            return new ProducerManager($app);
         };
     }
 
     private function loadConsumers(Container $app)
     {
         $app['rabbit.consumer'] = function ($app) {
-            if (!isset($app['rabbit.consumers']) && !isset($app['rabbit.batch_consumers'])) {
+            if (!isset($app['rabbit.consumers.config']) && !isset($app['rabbit.batch_consumers.config'])) {
                 return null;
             }
             $consumers = [];
 
-            foreach ($app['rabbit.consumers'] ?? [] as $name => $options) {
+            foreach ($app['rabbit.consumers.config'] ?? [] as $name => $options) {
                 $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
                 if (!isset($app['rabbit.connection'][$nameConnection])) {
                     throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
@@ -99,7 +74,7 @@ class RabbitServiceProvider implements ServiceProviderInterface
                 $consumers[$name] = $consumer;
             }
 
-            foreach ($app['rabbit.batch_consumers'] ?? [] as $name => $options) {
+            foreach ($app['rabbit.batch_consumers.config'] ?? [] as $name => $options) {
                 $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
                 if (!isset($app['rabbit.connection'][$nameConnection])) {
                     throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
