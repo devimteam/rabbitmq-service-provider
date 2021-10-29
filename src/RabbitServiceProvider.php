@@ -2,12 +2,9 @@
 
 namespace Devim\Provider\RabbitmqServiceProvider;
 
-use Pimple\Container;
-use Pimple\ServiceProviderInterface;
 use OldSound\RabbitMqBundle\RabbitMq\BaseAmqp;
 use OldSound\RabbitMqBundle\RabbitMq\BatchConsumer;
 use OldSound\RabbitMqBundle\RabbitMq\Consumer;
-use OldSound\RabbitMqBundle\RabbitMq\Producer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Connection\AMQPLazyConnection;
 use Pimple\Container;
@@ -60,12 +57,12 @@ class RabbitServiceProvider implements ServiceProviderInterface
     private function loadConsumers(Container $app)
     {
         $app['rabbit.consumer'] = function ($app) {
-            if (!isset($app['rabbit.consumers.config'])) {
+            if (!isset($app['rabbit.consumers.config']) && !isset($app['rabbit.batch_consumers.config'])) {
                 return null;
             }
             $consumers = [];
 
-            foreach ($app['rabbit.consumers.config'] as $name => $options) {
+            foreach ($app['rabbit.consumers.config'] ?? [] as $name => $options) {
                 $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
                 if (!isset($app['rabbit.connection'][$nameConnection])) {
                     throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
@@ -77,7 +74,7 @@ class RabbitServiceProvider implements ServiceProviderInterface
                 $consumers[$name] = $consumer;
             }
 
-            foreach ($app['rabbit.batch_consumers'] ?? [] as $name => $options) {
+            foreach ($app['rabbit.batch_consumers.config'] ?? [] as $name => $options) {
                 $nameConnection = $options['connection'] ?? self::DEFAULT_CONNECTION;
                 if (!isset($app['rabbit.connection'][$nameConnection])) {
                     throw new \InvalidArgumentException('Configuration for connection [' . $nameConnection . '] not found');
